@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meal prep mix & match</title>
+<style>
+:root {
+  --heading: #1F4E3D;
+  --accent: #3E7C59;
+  --accent-light: #EAF3EC;
+  --bg: #ffffff;
+  --card-bg: #ffffff;
+  --text: #222222;
+  --text-secondary: #5b5b5b;
+  --border: #e1ded4;
+  --over: #b3441d;
+  --over-bg: #fbeee7;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --heading: #8fd6b3; --accent: #7bc79f; --accent-light: #163326;
+    --bg: #14181a; --card-bg: #1d2225; --text: #eceae4; --text-secondary: #a8a59c;
+    --border: #33383a; --over: #f0a37f; --over-bg: #3a2216;
+  }
+}
+:root[data-theme="dark"] {
+  --heading: #8fd6b3; --accent: #7bc79f; --accent-light: #163326;
+  --bg: #14181a; --card-bg: #1d2225; --text: #eceae4; --text-secondary: #a8a59c;
+  --border: #33383a; --over: #f0a37f; --over-bg: #3a2216;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  padding: 1rem 1rem 2rem;
+  max-width: 720px; margin: 0 auto;
+}
+h1 { color: var(--heading); font-size: 1.4rem; margin: 0.5rem 0 0.2rem; }
+.sub { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; }
+h2 { color: var(--heading); font-size: 1.05rem; margin: 1.6rem 0 0.6rem; }
+
+.summary {
+  position: sticky; top: env(safe-area-inset-top, 0px);
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+  padding: 0.8rem 1rem; margin-bottom: 0.5rem; z-index: 5;
+}
+.summary-title { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.4rem; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; overflow-x: auto; }
+.stat { text-align: center; }
+.stat .num { font-size: 1.05rem; font-weight: 700; }
+.stat .lbl { font-size: 0.7rem; color: var(--text-secondary); }
+.stat.over .num { color: var(--over); }
+
+.options { display: grid; gap: 0.6rem; }
+.card {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+  padding: 0.7rem 0.9rem; cursor: pointer; transition: border-color 0.15s;
+}
+.card.selected { border-color: var(--accent); border-width: 2px; padding: calc(0.7rem - 1px) calc(0.9rem - 1px); }
+.card-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.card-name { font-weight: 600; font-size: 0.95rem; }
+.check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+.card.selected .check { border-color: var(--accent); background: var(--accent); }
+.card-macros { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem; }
+.card-time { font-size: 0.75rem; color: var(--text-secondary); }
+
+.recipe {
+  margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border);
+  font-size: 0.85rem; display: none;
+}
+.card.selected .recipe { display: block; }
+.recipe h4 { margin: 0.4rem 0 0.2rem; font-size: 0.82rem; color: var(--heading); }
+.recipe ul, .recipe ol { margin: 0.2rem 0; padding-left: 1.2rem; }
+.recipe li { margin-bottom: 0.2rem; }
+.note { background: var(--accent-light); border-radius: 8px; padding: 0.4rem 0.6rem; margin-top: 0.4rem; font-size: 0.78rem; }
+
+.toggle-row { display: flex; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.75rem; color: var(--text-secondary); }
+
+.own-recipe {
+  margin-top: 2rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.own-recipe label { display: block; font-size: 0.8rem; font-weight: 600; margin: 0.7rem 0 0.3rem; }
+.own-recipe label:first-child { margin-top: 0; }
+.own-recipe select, .own-recipe textarea, .own-recipe input[type="text"] {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+  color: var(--text); padding: 0.5rem 0.6rem; font-size: 0.85rem; font-family: inherit;
+}
+.own-recipe textarea { min-height: 90px; resize: vertical; }
+.own-recipe .row { display: flex; gap: 0.6rem; }
+.own-recipe .row > div { flex: 1; }
+.btn {
+  margin-top: 0.9rem; background: var(--accent); color: #fff; border: none; border-radius: 8px;
+  padding: 0.55rem 1rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+}
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn-ghost {
+  margin-top: 0.9rem; margin-left: 0.5rem; background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 1rem; font-size: 0.85rem; cursor: pointer;
+}
+.err { color: var(--over); font-size: 0.78rem; margin-top: 0.3rem; }
+.result {
+  margin-top: 0.9rem; padding: 0.7rem 0.85rem; background: var(--accent-light); border-radius: 8px;
+  font-size: 0.85rem; white-space: pre-wrap; line-height: 1.5;
+}
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<h1>Mix &amp; match meal prep</h1>
+<div class="sub">Pick one option per meal to build your day. Tap a card to see the full recipe.</div>
+
+<div class="summary">
+  <div class="summary-title">Your day vs. target (1735 cal · 151g protein · 155g carbs · 54g fat)</div>
+  <div class="grid4">
+    <div class="stat" id="stat-cal"><div class="num">0</div><div class="lbl">Calories</div></div>
+    <div class="stat" id="stat-pro"><div class="num">0g</div><div class="lbl">Protein</div></div>
+    <div class="stat" id="stat-carb"><div class="num">0g</div><div class="lbl">Carbs</div></div>
+    <div class="stat" id="stat-fat"><div class="num">0g</div><div class="lbl">Fat</div></div>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<div class="own-recipe">
+  <h2 style="margin-top:0">Got your own recipe?</h2>
+  <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.4rem;">
+    Paste in a recipe and get pointers on adjusting it toward one of your meal targets. (Ingredient-based heuristic — not a precise macro calculator.)
+  </div>
+
+  <label for="own-slot">Which meal is this for?</label>
+  <select id="own-slot">
+    <option value="breakfast">Breakfast — 395 cal, 33g protein, 49g carbs, 8g fat</option>
+    <option value="lunch">Lunch — 505 cal, 44g protein, 53g carbs, 13g fat</option>
+    <option value="snack">Snack — 245 cal, 19g protein, 21g carbs, 9g fat</option>
+    <option value="dinner">Dinner — 590 cal, 55g protein, 32g carbs, 24g fat</option>
+  </select>
+
+  <label for="own-text">Your recipe (ingredients and rough quantities)</label>
+  <textarea id="own-text" placeholder="e.g. 2 chicken breasts, 1 cup rice, 1 tbsp butter, broccoli, serves 2"></textarea>
+  <div id="own-err" class="err hidden"></div>
+
+  <div>
+    <button class="btn" id="own-suggest">Suggest adjustments</button>
+  </div>
+  <div id="own-result" class="result hidden"></div>
+</div>
+
+<script>
+const MEALS = {
+  breakfast: {
+    label: "Breakfast",
+    options: [
+      {
+        name: "Greek yogurt protein oat bowl", cal: 395, pro: 33, carb: 49, fat: 8, time: "5 min, no-cook",
+        ingredients: ["800g plain nonfat Greek yogurt", "120g rolled oats", "60g vanilla whey protein powder", "300g blueberries", "2 tbsp honey", "1½ tbsp chia seeds"],
+        steps: ["Mix oats and protein powder in a bowl.", "Divide yogurt into 4 containers.", "Add oat mix, blueberries, honey and chia seeds to each.", "Stir, seal, refrigerate."],
+        note: "Sits well overnight for a softer texture, or mix fresh for a firmer bite."
+      },
+      {
+        name: "Veggie egg white scramble wrap", cal: 380, pro: 34, carb: 34, fat: 13, time: "20 min",
+        ingredients: ["1.2L liquid egg whites (or 24 egg whites)", "4 whole eggs", "300g spinach", "200g bell peppers, diced", "4 whole-wheat tortillas", "4 tsp olive oil"],
+        steps: ["Heat oil in a pan, sauté peppers 3 min.", "Add spinach, wilt 1 min.", "Whisk egg whites and whole eggs, pour in, scramble until set.", "Divide filling into 4 tortillas, wrap, and store."],
+        note: "Reheats best unwrapped, then rolled fresh — soggy tortillas are the main pitfall if wrapped ahead."
+      },
+      {
+        name: "Protein pancakes with berries", cal: 410, pro: 30, carb: 52, fat: 9, time: "25 min",
+        ingredients: ["240g oat flour", "60g vanilla protein powder", "4 eggs", "480ml milk", "300g mixed berries", "2 tbsp maple syrup"],
+        steps: ["Whisk oat flour, protein powder, eggs and milk into a batter.", "Cook ¼-cup portions on a nonstick pan, 2 min per side.", "Stack and portion into 4 containers.", "Top with berries and a drizzle of maple syrup before eating."],
+        note: "Freezes well — layer parchment between pancakes so they don't stick together."
+      }
+    ]
+  },
+  lunch: {
+    label: "Lunch",
+    options: [
+      {
+        name: "Teriyaki chicken rice bowl", cal: 505, pro: 44, carb: 53, fat: 13, time: "35 min",
+        ingredients: ["600g raw chicken breast, cubed", "260g uncooked white rice", "600g stir-fry vegetables", "6 tbsp low-sodium teriyaki sauce", "4 tsp sesame oil", "4 tsp sesame seeds"],
+        steps: ["Cook rice per package directions.", "Sear chicken in sesame oil until cooked through (165°F/74°C).", "Add vegetables, stir-fry until tender-crisp.", "Stir in teriyaki sauce, portion over rice, top with sesame seeds."],
+        note: "Cut into the thickest piece of chicken to check for pink if you don't have a thermometer."
+      },
+      {
+        name: "Turkey chili with beans", cal: 520, pro: 42, carb: 48, fat: 16, time: "40 min",
+        ingredients: ["680g ground turkey", "2 cans (800g) kidney beans, drained", "1 can (400g) diced tomatoes", "1 onion, diced", "2 tbsp chili powder", "2 tsp cumin"],
+        steps: ["Brown turkey with onion in a large pot, 8 min.", "Add beans, tomatoes, chili powder and cumin.", "Simmer uncovered 20 min, stirring occasionally.", "Portion into 4 containers."],
+        note: "Chili thickens as it cools — thin with a splash of water or broth when reheating."
+      },
+      {
+        name: "Mediterranean chicken quinoa bowl", cal: 495, pro: 40, carb: 50, fat: 15, time: "35 min",
+        ingredients: ["560g raw chicken breast", "220g uncooked quinoa", "300g cucumber and tomato, diced", "120g feta cheese, crumbled", "4 tbsp olive oil", "2 lemons, juiced"],
+        steps: ["Cook quinoa per package directions.", "Season and grill or pan-sear chicken until cooked through, then slice.", "Toss cucumber and tomato with olive oil and lemon juice.", "Assemble bowls: quinoa, chicken, salad, feta on top."],
+        note: "Dress the salad separately and add just before eating to keep it from going watery."
+      }
+    ]
+  },
+  snack: {
+    label: "Snack",
+    options: [
+      {
+        name: "Cottage cheese with berries & almonds", cal: 245, pro: 19, carb: 21, fat: 9, time: "3 min, no-cook",
+        ingredients: ["680g low-fat cottage cheese", "300g strawberries, sliced", "40g almonds, chopped"],
+        steps: ["Divide cottage cheese into 4 containers.", "Top with berries and almonds.", "Seal and refrigerate."],
+        note: "Nut allergy? Swap almonds for pumpkin seeds."
+      },
+      {
+        name: "Protein smoothie pack", cal: 230, pro: 25, carb: 24, fat: 4, time: "5 min, no-cook",
+        ingredients: ["4 bananas", "60g vanilla protein powder (split)", "480ml skim milk (split)", "4 handfuls ice"],
+        steps: ["Freeze bananas in individual bags ahead of time.", "Each day, blend one banana, ¼ of the protein powder, and 120ml milk with ice.", "Drink fresh."],
+        note: "Best blended fresh each day rather than pre-mixed — smoothies separate in the fridge."
+      }
+    ]
+  },
+  dinner: {
+    label: "Dinner",
+    options: [
+      {
+        name: "Baked chicken, sweet potato & broccoli", cal: 590, pro: 55, carb: 32, fat: 24, time: "40 min",
+        ingredients: ["660g raw chicken breast", "480g sweet potato, cubed", "600g broccoli florets", "5 tbsp olive oil", "Salt, pepper, garlic powder"],
+        steps: ["Preheat oven to 425°F (220°C).", "Toss sweet potato with oil, roast 20-25 min, flipping halfway.", "Season chicken, roast alongside 20-22 min until 165°F (74°C).", "Add broccoli to the tray for the last 10-12 min. Rest chicken 5 min, then slice and portion."],
+        note: "Resting the chicken before slicing keeps it juicier."
+      },
+      {
+        name: "Baked salmon, rice & asparagus", cal: 610, pro: 48, carb: 38, fat: 28, time: "35 min",
+        ingredients: ["680g salmon fillet", "260g uncooked white rice", "600g asparagus, trimmed", "4 tbsp olive oil", "2 lemons, sliced"],
+        steps: ["Cook rice per package directions.", "Preheat oven to 400°F (204°C); toss asparagus with oil, roast 12 min.", "Season salmon, top with lemon slices, roast 12-15 min until it flakes easily.", "Portion salmon, rice and asparagus into 4 containers."],
+        note: "Salmon is best eaten within 2-3 days — cook this portion closer to when you'll eat it."
+      },
+      {
+        name: "Beef stir-fry with brown rice", cal: 600, pro: 50, carb: 45, fat: 22, time: "35 min",
+        ingredients: ["600g lean beef strips", "220g uncooked brown rice", "600g broccoli and carrots", "5 tbsp low-sodium soy sauce", "2 tbsp cornstarch", "3 tsp sesame oil"],
+        steps: ["Cook brown rice per package directions (takes longer than white rice).", "Toss beef in cornstarch, sear in sesame oil until browned.", "Add vegetables, stir-fry until tender-crisp.", "Stir in soy sauce, portion over rice."],
+        note: "Slicing beef thin, against the grain, keeps it tender rather than chewy."
+      }
+    ]
+  }
+};
+
+const TARGET = { cal: 1735, pro: 151, carb: 155, fat: 54 };
+const selected = { breakfast: 0, lunch: 0, snack: 0, dinner: 0 };
+
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  Object.keys(MEALS).forEach(key => {
+    const section = MEALS[key];
+    const h = document.createElement("h2");
+    h.textContent = section.label;
+    app.appendChild(h);
+    const grid = document.createElement("div");
+    grid.className = "options";
+    section.options.forEach((opt, i) => {
+      const card = document.createElement("div");
+      card.className = "card" + (selected[key] === i ? " selected" : "");
+      card.innerHTML = `
+        <div class="card-top">
+          <div>
+            <div class="card-name">${opt.name}</div>
+            <div class="card-macros">${opt.cal} cal · ${opt.pro}g protein · ${opt.carb}g carbs · ${opt.fat}g fat</div>
+            <div class="card-time">${opt.time}</div>
+          </div>
+          <div class="check"></div>
+        </div>
+        <div class="recipe">
+          <h4>Ingredients (4 servings)</h4>
+          <ul>${opt.ingredients.map(i => `<li>${i}</li>`).join("")}</ul>
+          <h4>Steps</h4>
+          <ol>${opt.steps.map(s => `<li>${s}</li>`).join("")}</ol>
+          <div class="note">${opt.note}</div>
+        </div>
+      `;
+      card.addEventListener("click", () => {
+        selected[key] = i;
+        render();
+      });
+      grid.appendChild(card);
+    });
+    app.appendChild(grid);
+  });
+  updateSummary();
+}
+
+function updateSummary() {
+  const totals = { cal: 0, pro: 0, carb: 0, fat: 0 };
+  Object.keys(MEALS).forEach(key => {
+    const opt = MEALS[key].options[selected[key]];
+    totals.cal += opt.cal; totals.pro += opt.pro; totals.carb += opt.carb; totals.fat += opt.fat;
+  });
+  setStat("stat-cal", totals.cal, "", TARGET.cal);
+  setStat("stat-pro", totals.pro, "g", TARGET.pro);
+  setStat("stat-carb", totals.carb, "g", TARGET.carb);
+  setStat("stat-fat", totals.fat, "g", TARGET.fat);
+}
+
+function setStat(id, value, unit, target) {
+  const el = document.getElementById(id);
+  el.querySelector(".num").textContent = value + unit;
+  const diff = Math.abs(value - target);
+  const overThreshold = target * 0.1;
+  el.classList.toggle("over", diff > overThreshold);
+}
+
+render();
+
+const SLOT_TARGETS = {
+  breakfast: { label: "breakfast", cal: 395, pro: 33, carb: 49, fat: 8 },
+  lunch: { label: "lunch", cal: 505, pro: 44, carb: 53, fat: 13 },
+  snack: { label: "snack", cal: 245, pro: 19, carb: 21, fat: 9 },
+  dinner: { label: "dinner", cal: 590, pro: 55, carb: 32, fat: 24 }
+};
+
+// Lightweight keyword-based heuristic (no external AI call — this runs
+// entirely client-side, so it works on static hosting like GitHub Pages).
+const PROTEIN_WORDS = ["chicken","egg","yogurt","yoghurt","protein powder","whey","cottage cheese","tofu","turkey","beef","fish","salmon","tuna","prawn","shrimp","beans","lentil","quark","skyr","greek"];
+const CARB_DENSE_WORDS = ["rice","oats","oat","potato","bread","pasta","banana","honey","raisin","grape","maple syrup","sugar","tortilla","quinoa","dried fruit"];
+const FAT_DENSE_WORDS = ["oil","butter","nut","seed","avocado","cheese","cream","coconut"];
+
+function matches(text, words) {
+  return words.filter(w => text.includes(w));
+}
+
+function analyzeRecipe(text, target) {
+  const lower = text.toLowerCase();
+  const proteinHits = matches(lower, PROTEIN_WORDS);
+  const carbHits = matches(lower, CARB_DENSE_WORDS);
+  const fatHits = matches(lower, FAT_DENSE_WORDS);
+  const lines = [];
+
+  if (proteinHits.length === 0) {
+    lines.push("No clear protein source spotted. Your " + target.label + " target is around " + target.pro +
+      "g protein — consider adding Greek yogurt, cottage cheese, a scoop of protein powder, eggs, or a lean meat.");
+  } else {
+    lines.push("Protein sources found: " + proteinHits.join(", ") + ". Good starting point for your " + target.pro + "g target — bulk up the portion if it still falls short.");
+  }
+
+  if (carbHits.length >= 3) {
+    lines.push("Several carb-dense ingredients (" + carbHits.join(", ") + "). If your total lands above ~" + target.carb +
+      "g carbs, try trimming the sweetest ones first (honey, dried fruit, maple syrup) rather than the whole grains.");
+  } else if (carbHits.length === 0) {
+    lines.push("Not much carb content showing up — if you're aiming for " + target.carb + "g carbs, a starch like oats, rice, or fruit would help close the gap.");
+  }
+
+  if (fatHits.length >= 3) {
+    lines.push("Several fat-dense ingredients (" + fatHits.join(", ") + "). Nuts, seeds, oil, and cheese add up fast — if fat is running over your " + target.fat + "g target, scale back the seeds/nuts portion first.");
+  } else if (fatHits.length === 0) {
+    lines.push("Little fat showing up — a small amount of nuts, seeds, or a drizzle of oil could help reach your " + target.fat + "g fat target if needed.");
+  }
+
+  lines.push("These are directional pointers based on the ingredients you listed, not a calculated macro count. For exact numbers, log the recipe in a nutrition tracker (e.g. Cronometer or MyFitnessPal) using your real quantities.");
+
+  return lines.join("\n\n");
+}
+
+const suggestBtn = document.getElementById("own-suggest");
+const errEl = document.getElementById("own-err");
+const resultEl = document.getElementById("own-result");
+const textEl = document.getElementById("own-text");
+const slotEl = document.getElementById("own-slot");
+
+suggestBtn.addEventListener("click", () => {
+  errEl.classList.add("hidden");
+  const recipeText = textEl.value.trim();
+  if (!recipeText) {
+    errEl.textContent = "Paste in a recipe first.";
+    errEl.classList.remove("hidden");
+    return;
+  }
+  const target = SLOT_TARGETS[slotEl.value];
+  resultEl.classList.remove("hidden");
+  resultEl.textContent = analyzeRecipe(recipeText, target);
+});
+</script>
+
+</body>
+</html>
